@@ -1,0 +1,166 @@
+#!/usr/bin/python
+"""Custom topology example
+Adding the 'topos' dict with a key/value pair to generate our newly defined
+topology enables one to pass in '--topo=mytopo' from the command line.
+"""
+ 
+from mininet.topo import Topo
+from mininet.net import Mininet
+from mininet.node import RemoteController,CPULimitedHost
+from mininet.link import TCLink
+from mininet.util import dumpNodeConnections
+from mininet.log import setLogLevel
+ 
+
+
+
+
+class MyTopo( Topo ):
+    "Simple topology example."
+ 
+    def __init__( self ):
+        "Create custom topo."
+ 
+        # Initialize topology
+        Topo.__init__( self )
+        L1 = 1
+        L2 = L1 * 2 
+        L3 = L2 *2
+        c = []
+        a = []
+        e = []
+          
+        # add core ovs  
+        for i in range( L1 ):
+                sw = self.addSwitch( 'c{}'.format( i + 1 ) )
+                c.append( sw )
+    
+        # add aggregation ovs
+        for i in range( L2 ):
+                sw = self.addSwitch( 'a{}'.format( i + 1 ) )
+                a.append( sw )
+    
+        # add edge ovs
+        for i in range( L3 ):
+                sw = self.addSwitch( 'e{}'.format( i + 1 ) )
+                e.append( sw )
+ 
+        # add links between core and aggregation ovs
+        for i in range( L1 ):
+sw1 = c[i]
+                #for sw2 in a[0:2]:
+# 10 Mbps, 5ms delay, 10% loss, 1000 packet queue
+                self.addLink(a[0], sw1, bw=10, delay='5ms', loss=10, max_queue_size=1000, use_htb=True)
+self.addLink(a[1], sw1, bw=10, delay='5ms', loss=10, max_queue_size=1000, use_htb=True)
+			            #self.addLink( sw2, sw1 )
+ 
+        # add links between aggregation and edge ovs
+        for i in range(L2):
+                sw1 = a[i]
+for sw2 in e[2*i:2*i+2]:
+					self.addLink( sw2, sw1 )
+ 
+        #add hosts and its links with edge ovs
+        count = 1
+        for sw1 in e:
+                for i in range(2):
+                	host = self.addHost( 'h{}'.format( count ) )
+# Each host gets 50%/n of system CPU
+#host = self.addHost( 'h%s' % (h + 1), cpu=.5/n )
+                	self.addLink( sw1, host )
+                	count += 1
+
+
+class MyTopo1( Topo ):
+    "Simple topology example."
+ 
+    def __init__( self ):
+        "Create custom topo."
+ 
+        # Initialize topology
+        Topo.__init__( self )
+num = input(“Enter the bandwidth you want to add:”)
+        L1 = 1
+        L2 = 2+num
+        L3 = L2 *2
+        c = []
+        a = []
+        e = []
+        z = [30, 1000]
+
+        # add bandwidth
+        for i in range(num):
+z.append(input("The %d communation service's bandwidth:"%(i+1)))
+
+        # add core ovs  
+        for i in range( L1 ):
+                sw = self.addSwitch( 'c{}'.format( i + 1 ) )
+                c.append( sw )
+    
+        # add aggregation ovs
+        for i in range( L2 ):
+                sw = self.addSwitch( 'a{}'.format( i + 1 ) )
+                a.append( sw )
+    
+        # add edge ovs
+        for i in range( L3 ):
+                sw = self.addSwitch( 'e{}'.format( i + 1 ) )
+                e.append( sw )
+ 
+        # add links between core and aggregation ovs
+        for i in range( L1 ):
+sw1 = c[i]
+                #for sw2 in a[0:2]:
+# 10 Mbps, 5ms delay, 10% loss, 1000 packet queue
+                #self.addLink(a[0], sw1, bw=10, delay='5ms', loss=10, max_queue_size=1000, use_htb=True)
+#self.addLink(a[1], sw1, bw=10, delay='5ms', loss=10, max_queue_size=1000, use_htb=True)
+#self.addLink(a[2], sw1, bw=num, delay='5ms', loss=10, max_queue_size=1000, use_htb=True)
+			            #self.addLink( sw2, sw1 )
+               for i in range( L2 ):
+                        self.addLink( a[i], sw1, bw=z[i], delay='5ms', loss=10, max_queue_size=1000, use_htb=True)
+ 
+        # add links between aggregation and edge ovs
+        for i in range(L2):
+                sw1 = a[i]
+for sw2 in e[2*i:2*i+2]:
+					self.addLink( sw2, sw1 )
+ 
+        #add hosts and its links with edge ovs
+        count = 1
+        for sw1 in e:
+                for i in range(2):
+                	host = self.addHost( 'h{}'.format( count ) )
+# Each host gets 50%/n of system CPU
+#host = self.addHost( 'h%s' % (h + 1), cpu=.5/n )
+                	self.addLink( sw1, host )
+                	count += 1
+
+
+
+
+def runExperiment():
+"Create and test a simple experiment"
+print "Welcome to customize your own telecommunication system!"
+print "You have VHF, UHF. Do you want to add other links?[Y/N]"
+st = raw_input();
+str1 = str(st);
+if str1 =='N' or str1 =='n':
+topo = MyTopo()
+if str1 =='Y' or str1 =='y':
+topo = MyTopo1()
+net = Mininet(topo=topo,host=CPULimitedHost, link=TCLink)
+net.start()
+print "Dumping host connections"
+dumpNodeConnections(net.hosts)
+#print "Testing network connectivity"
+#net.pingAll()
+#print "Testing bandwidth between h1 and h2"
+#h1, h2 = net.get('h1', 'h2')
+#net.iperf((h1, h2))
+net.stop()
+
+
+if __name__ == '__main__':
+# Tell mininet to print useful information
+setLogLevel('info')
+runExperiment()
